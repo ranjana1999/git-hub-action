@@ -1,0 +1,59 @@
+name: pipeline first
+
+on:
+  push:
+    branches:
+      - main
+      - ep1
+    paths:
+      - ep1/**
+
+jobs:
+  tf_workspace:
+    name: 'cicd pipeline'
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: GIT checkout
+        id: 'git_checkout'
+        uses: 'actions/checkout@v4'
+
+      - name: Terraform init
+        id: 'terraform-init'
+        env:
+          GOOGLE_CREDENTIALS: ${{secrets.PIPELINE1_SA_KEY}}
+        run: |
+          cd ./ep1
+          terraform init
+          pwd
+      - name: Terraform Plan
+        id: 'terraform-plan'
+        env:
+          GOOGLE_CREDENTIALS: ${{secrets.PIPELINE1_SA_KEY}}
+        run: |
+          cd ./ep1
+          terraform plan
+      - name: Terraform Apply
+        id: 'terraform-apply'
+        if: |
+          github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_CREDENTIALS: ${{secrets.PIPELINE1_SA_KEY}}
+        run: |
+          cd ./ep1
+          terraform apply --auto-approve
+      - name: Upload file
+        id: 'upload file'
+        if: |
+          github.ref == 'refs/heads/main'
+        env:
+          GOOGLE_CREDENTIALS: ${{secrets.PIPELINE1_SA_KEY}}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{github.workspace}}/cred.json
+        run: |
+          cd ./ep1
+          echo -n "$GOOGLE_CREDENTIALS" > $GOOGLE_APPLICATION_CREDENTIALS
+          python gcs_upload.py
+          rm $GOOGLE_APPLICATION_CREDENTIALS
+         
+
+
