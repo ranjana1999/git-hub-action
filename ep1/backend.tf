@@ -6,5 +6,5 @@ terraform{
     }
 }
 provider "google" {
-  
+  project = "my-project-57732-v"
 }
